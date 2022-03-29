@@ -45,3 +45,6 @@ Makefile.in
 /perdition/db/daemon/server
 /perdition/perdition
 /stamp-h1
+/.idea
+/build
+config.h.in~
