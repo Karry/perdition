@@ -27,23 +27,23 @@ jobs:
                cd vanessa_logger &&
                autoreconf --install --force --verbose && 
                ./configure --prefix=/usr && 
-               make -j $(nproc) install"
+               sudo make -j $(nproc) install"
       - name: Install vanessa_socket
         run:  "git clone https://github.com/horms/vanessa_socket.git vanessa_socket &&
                cd vanessa_socket &&
                autoreconf --install --force --verbose && 
                ./configure --prefix=/usr && 
-               make -j $(nproc) install"
+               sudo make -j $(nproc) install"
       - name: Install vanessa_adt
         run:  "git clone https://github.com/horms/vanessa_adt.git vanessa_adt &&
                cd vanessa_adt &&
                autoreconf --install --force --verbose && 
                ./configure --prefix=/usr && 
-               make -j $(nproc) install"
+               sudo make -j $(nproc) install"
       - name: Configure perdition
         run: "autoreconf --install --force --verbose &&
               ./configure --prefix=/usr"
       - name: Build perdition
-        run: "make -j $(nproc) install"
+        run: "sudo make -j $(nproc) install"
       - name: Basic test
         run: "perdition --help"
