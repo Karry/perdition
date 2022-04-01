@@ -325,6 +325,34 @@ static void perdition_log_close(const char *from_to_host_str,
 				   received, sent);
 }
 
+/**
+ * @param id user id from client
+ * @param [out] usp upstream user, server, port
+ * @param [out] auth upstream auth method and password
+ * @param [out] ssl_mode upstream server ssl mode
+ * @return 0 on failure, 1 on success
+ */
+int connection_configuration(char *id,
+                             user_server_port_t **usp,
+                             struct auth* auth,
+                             int *ssl_mode)
+{
+  *usp = user_server_port_create();
+  (*usp)->user = strdup("address@example.org");
+  (*usp)->server = strdup("localhost");
+  (*usp)->port = strdup("993");
+
+  // STARTTLS:
+  // *ssl_mode = (*ssl_mode | SSL_MODE_TLS_OUTGOING) & (~SSL_MODE_SSL_OUTGOING);
+  // SSL:
+  *ssl_mode = (*ssl_mode | SSL_MODE_SSL_OUTGOING) & (~SSL_MODE_TLS_OUTGOING);
+
+  free(auth->passwd);
+  auth->passwd = strdup("pass");
+  auth->type = auth_t_passwd;
+  return 1;
+}
+
 /**********************************************************************
  * Muriel the main function
  **********************************************************************/
@@ -663,7 +691,7 @@ int main (int argc, char **argv, char **envp){
       flag |= VANESSA_SOCKET_TCP_KEEPALIVE;
     s = vanessa_socket_server_acceptv(g, opt.connection_limit,
 				      (struct sockaddr *) peername,
-				      (struct sockaddr *) sockname, flag);
+				      (struct sockaddr *) sockname, flag); // for debugging, use: flags | VANESSA_SOCKET_NO_FORK
     if(s < 0){
       VANESSA_LOGGER_DEBUG("vanessa_socket_server_accept");
       VANESSA_LOGGER_ERR("Fatal error accepting child connection. Exiting.");
@@ -824,10 +852,17 @@ int main (int argc, char **argv, char **envp){
     }
 
     /*Read the server from the map, if we have a map*/
+    /*
     if(dbserver_get || dbserver_get2 || opt.client_server_specification) {
 	usp = getserver(id, from_host_str, to_host_str,
 			from_serv_str, to_serv_str,
 			dbserver_get, dbserver_get2);
+    }
+    */
+    if (!connection_configuration(id, &usp, &auth, &opt.ssl_mode)){
+      LOGIN_FAILED_PROTOCOL(PROTOCOL_ERR, "Could not determine upstream server configuration");
+      PERDITION_CLEAN_UP_MAIN;
+      continue;
     }
 
     if (id != auth_get_authorisation_id(&auth))
